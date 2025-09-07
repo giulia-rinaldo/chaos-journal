@@ -146,13 +146,17 @@
     const thanksMessage = document.getElementById('thanksMessage');
     const intro = document.querySelector('.intro');
     
-    // Sostituisci questo URL con il tuo URL del Google Apps Script
-    const appsScriptUrl = "https://script.google.com/macros/s/AKfycbysQzpVhcnunYX35VFgLcm0xtN8R6drtapMV1WGs02DkEeSqf0IylMnXlOB7I3DzW3Lxw/exec";
+    // Il TUO NUOVO URL del Google Apps Script
+    const appsScriptUrl = "https://script.google.com/macros/s/AKfycbwj855gSUwVzmqwaPNgLpjckOgaqCWzE52k_ugqq4v4jczgUkoXtT4rG-Wnm77pQjwfDA/exec";
     let localMemories = [];
 
     async function loadMemories() {
       try {
         const response = await fetch(appsScriptUrl);
+        // Verifica che la risposta sia OK prima di procedere
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         localMemories = await response.json();
       } catch (error) {
         console.error("Error loading memories:", error);
@@ -265,10 +269,15 @@
       const data = new URLSearchParams(formData);
 
       try {
-        await fetch(appsScriptUrl, {
+        const response = await fetch(appsScriptUrl, {
           method: "POST",
           body: data
         });
+
+        // Verifica che la risposta sia OK prima di procedere con l'animazione
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
 
         form.classList.add('fade-out');
         intro.classList.add('fade-out');
