@@ -148,116 +148,26 @@
     const thanksMessage = document.getElementById('thanksMessage');
     const intro = document.querySelector('.intro');
     
-    // Sostituisci questo URL con il TUO NUOVO URL del Google Apps Script
-    const appsScriptUrl = "IL TUO NUOVO URL QUI";
+    const appsScriptUrl = "https://script.google.com/macros/s/AKfycbweoTM6t2Lfe_Ad2SOFa8JD6-ss_Nh8bVAiwH_0Bm-KYt5xqUwfkBzLmi4N0MgiJIni-Q/exec";
     let localMemories = [];
+    
+    // Function to add a single memory to the page with a random position
+    function showMemory(message, name) {
+      memoriesContainer.style.display = "block";
+      const el = document.createElement("div");
+      el.className = "memory";
+      el.innerHTML = `<regular>${message}</regular><br><em style="font-weight:100">-${name || "Anonymous"}</em>`;
 
-    async function loadMemories() {
-      try {
-        const response = await fetch(appsScriptUrl);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        localMemories = await response.json();
-      } catch (error) {
-        console.error("Error loading memories:", error);
-      }
-    }
-
-    function showMemories(memoriesToShow) {
-        memoriesContainer.innerHTML = "";
-        memoriesContainer.style.display = "block";
-        const usedPositions = [];
-        const thanksRect = thanksMessage.getBoundingClientRect();
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const thanksTop = (thanksRect.top / vh) * 100;
-        const thanksLeft = (thanksRect.left / vw) * 100;
-        const thanksBottom = (thanksRect.bottom / vh) * 100;
-        const thanksRight = (thanksRect.right / vw) * 100;
-
-        const memoryElements = [];
-        memoriesToShow.forEach((item) => {
-          const el = document.createElement("div");
-          el.className = "memory";
-          el.innerHTML = `<regular>${item.message}</regular><br><em style="font-weight:100">-${item.name || "Anonymous"}</em>`;
-
-          let region, top = 0, left = 0;
-          const margin = 5;
-          let tries = 0;
-          let overlap = false;
-
-          do {
-            const areas = ['top', 'bottom', 'left', 'right'];
-            region = areas[Math.floor(Math.random() * areas.length)];
-
-            if (region === 'top') {
-              top = Math.random() * (thanksTop - margin);
-              left = Math.random() * 90;
-            } else if (region === 'bottom') {
-              top = thanksBottom + Math.random() * (100 - thanksBottom - margin);
-              left = Math.random() * 90;
-            } else if (region === 'left') {
-              top = Math.random() * 90;
-              left = Math.random() * (thanksLeft - margin);
-            } else if (region === 'right') {
-              top = Math.random() * 90;
-              left = thanksRight + Math.random() * (100 - thanksRight - margin);
-            }
-
-            el.style.top = `${top}vh`;
-            el.style.left = `${left}vw`;
-            el.style.visibility = "hidden";
-            memoriesContainer.appendChild(el);
-            const rect = el.getBoundingClientRect();
-            memoriesContainer.removeChild(el);
-
-            overlap = false;
-            for (const pos of usedPositions) {
-              if (
-                rect.left < pos.right &&
-                rect.right > pos.left &&
-                rect.top < pos.bottom &&
-                rect.bottom > pos.top
-              ) {
-                overlap = true;
-                break;
-              }
-            }
-            tries++;
-          } while (overlap && tries < 40);
-
-          el.style.top = `${top}vh`;
-          el.style.left = `${left}vw`;
-          el.style.visibility = "visible";
-          memoryElements.push(el);
-
-          memoriesContainer.appendChild(el);
-          const finalRect = el.getBoundingClientRect();
-          usedPositions.push({
-            left: finalRect.left,
-            right: finalRect.right,
-            top: finalRect.top,
-            bottom: finalRect.bottom
-          });
-          memoriesContainer.removeChild(el);
-        });
-
-        function showMemoriesWithDelay(index = 0) {
-          if (index === 0) {
-            thanksMessage.classList.remove('visible');
-            setTimeout(() => {
-              thanksMessage.style.display = "none";
-            }, 800);
-          }
-          if (index >= memoryElements.length) return;
-          memoriesContainer.appendChild(memoryElements[index]);
-          setTimeout(() => {
-            memoryElements[index].classList.add("visible");
-            showMemoriesWithDelay(index + 1);
-          }, index === 0 ? 0 : 200);
-        }
-        showMemoriesWithDelay();
+      let top = Math.random() * 90;
+      let left = Math.random() * 90;
+      
+      el.style.top = `${top}vh`;
+      el.style.left = `${left}vw`;
+      memoriesContainer.appendChild(el);
+      
+      setTimeout(() => {
+        el.classList.add("visible");
+      }, 100);
     }
 
     form.addEventListener('submit', async (e) => {
@@ -291,10 +201,11 @@
           }, 10);
         }, 300);
 
-        await loadMemories(); // Ricarica tutte le memorie dal foglio di calcolo
+        const newMessage = formData.get('message');
+        const newName = formData.get('name');
         
         setTimeout(() => {
-          showMemories(localMemories); // Mostra tutte le memorie
+          showMemory(newMessage, newName);
         }, 2000);
 
       } catch (error) {
@@ -303,10 +214,6 @@
       }
     });
 
-    window.addEventListener('load', async () => {
-        await loadMemories();
-        showMemories(localMemories);
-    });
   </script>
 </body>
 </html>
