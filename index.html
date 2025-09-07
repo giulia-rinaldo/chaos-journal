@@ -137,7 +137,7 @@
     <button type="submit">Entrust the creative chaos</button>
   </form>
   
-    <button id="resetMemoriesButton">Resetta Memorie</button>
+    // <button id="resetMemoriesButton">Chaos Reset</button>
 
   <div id="memoriesContainer"></div>
 
@@ -146,7 +146,7 @@
     const memoriesContainer = document.getElementById('memoriesContainer');
     const thanksMessage = document.getElementById('thanksMessage');
     const intro = document.querySelector('.intro');
-    const resetButton = document.getElementById('resetMemoriesButton');
+    // const resetButton = document.getElementById('resetMemoriesButton');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -188,9 +188,9 @@
     });
 
     // Aggiungi l'evento di ascolto per il nuovo pulsante
-    resetButton.addEventListener('click', () => {
-      memoriesContainer.innerHTML = "";
-    });
+    // resetButton.addEventListener('click', () => {
+      // memoriesContainer.innerHTML = "";
+    // });
 
     async function loadMemories() {
       try {
