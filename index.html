@@ -72,7 +72,7 @@
       font-weight: bold;
     }
 
-    #memoriesContainer {
+    #journalContainer {
       position: fixed;
       top: 0; left: 0;
       width: 100vw;
@@ -81,7 +81,7 @@
       z-index: 20;
     }
 
-    .memory {
+    .journal-entry {
       position: absolute;
       max-width: 250px;
       font-size: 0.9rem;
@@ -123,9 +123,9 @@
       opacity: 1;
     }
 
-    /* Slight printed-ink effect on the text (subtle) */
-    .intro p, #thanksMessage, .memory {
-      text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.12);
+    /* Faint ink-on-paper effect on the text */
+    .intro p, #thanksMessage, .journal-entry {
+      text-shadow: 0.3px 0.3px 0.4px rgba(0, 0, 0, 0.08);
     }
   </style>
 </head>
@@ -139,44 +139,44 @@
     Thanks for entrusting the creative chaos
   </div>
 
-  <form id="memoryForm">
+  <form id="journalForm">
     <textarea name="message" placeholder="Write your idea..." required></textarea>
     <input type="text" name="name" placeholder="Your name or initials">
     <button type="submit">Entrust the creative chaos</button>
   </form>
 
-  <div id="memoriesContainer"></div>
+  <div id="journalContainer"></div>
 
   <script>
-    const form = document.getElementById('memoryForm');
-    const memoriesContainer = document.getElementById('memoriesContainer');
+    const form = document.getElementById('journalForm');
+    const journalContainer = document.getElementById('journalContainer');
     const thanksMessage = document.getElementById('thanksMessage');
     const intro = document.querySelector('.intro');
 
     // Shared backend: Google Apps Script writing to a Google Sheet
     const appsScriptUrl = "https://script.google.com/macros/s/AKfycbxvpo3rIMEm1sgfdBXvwGV04qZtzJyGQRohsjRvrPZjgCCkOsv92K9WizDHoVLChnZaEg/exec";
-    let localMemories = [];
+    let journalEntries = [];
 
-    async function loadMemories() {
+    async function loadJournal() {
       try {
         const response = await fetch(appsScriptUrl);
         if (!response.ok) throw new Error('Network response was not ok');
-        localMemories = await response.json();
+        journalEntries = await response.json();
       } catch (error) {
-        console.error("Error loading memories:", error);
-        localMemories = [];
+        console.error("Error loading journal:", error);
+        journalEntries = [];
       }
     }
 
-    async function saveMemory(message, name) {
+    async function saveJournalEntry(message, name) {
       const data = new URLSearchParams({ message, name });
       const response = await fetch(appsScriptUrl, { method: "POST", body: data });
       if (!response.ok) throw new Error('Network response was not ok');
     }
 
-    function showMemories(memoriesToShow) {
-        memoriesContainer.innerHTML = "";
-        memoriesContainer.style.display = "block";
+    function showJournal(entriesToShow) {
+        journalContainer.innerHTML = "";
+        journalContainer.style.display = "block";
         const usedPositions = [];
         const thanksRect = thanksMessage.getBoundingClientRect();
         const vw = window.innerWidth;
@@ -186,10 +186,10 @@
         const thanksBottom = (thanksRect.bottom / vh) * 100;
         const thanksRight = (thanksRect.right / vw) * 100;
 
-        const memoryElements = [];
-        memoriesToShow.forEach((item) => {
+        const entryElements = [];
+        entriesToShow.forEach((item) => {
           const el = document.createElement("div");
-          el.className = "memory";
+          el.className = "journal-entry";
           el.innerHTML = `<regular>${item.message}</regular><br><em style="font-weight:100">-${item.name || "Anonymous"}</em>`;
 
           let region, top = 0, left = 0;
@@ -218,9 +218,9 @@
             el.style.top = `${top}vh`;
             el.style.left = `${left}vw`;
             el.style.visibility = "hidden";
-            memoriesContainer.appendChild(el);
+            journalContainer.appendChild(el);
             const rect = el.getBoundingClientRect();
-            memoriesContainer.removeChild(el);
+            journalContainer.removeChild(el);
 
             overlap = false;
             for (const pos of usedPositions) {
@@ -240,9 +240,9 @@
           el.style.top = `${top}vh`;
           el.style.left = `${left}vw`;
           el.style.visibility = "visible";
-          memoryElements.push(el);
+          entryElements.push(el);
 
-          memoriesContainer.appendChild(el);
+          journalContainer.appendChild(el);
           const finalRect = el.getBoundingClientRect();
           usedPositions.push({
             left: finalRect.left,
@@ -250,24 +250,24 @@
             top: finalRect.top,
             bottom: finalRect.bottom
           });
-          memoriesContainer.removeChild(el);
+          journalContainer.removeChild(el);
         });
 
-        function showMemoriesWithDelay(index = 0) {
+        function showEntriesWithDelay(index = 0) {
           if (index === 0) {
             thanksMessage.classList.remove('visible');
             setTimeout(() => {
               thanksMessage.style.display = "none";
             }, 800);
           }
-          if (index >= memoryElements.length) return;
-          memoriesContainer.appendChild(memoryElements[index]);
+          if (index >= entryElements.length) return;
+          journalContainer.appendChild(entryElements[index]);
           setTimeout(() => {
-            memoryElements[index].classList.add("visible");
-            showMemoriesWithDelay(index + 1);
+            entryElements[index].classList.add("visible");
+            showEntriesWithDelay(index + 1);
           }, index === 0 ? 0 : 200);
         }
-        showMemoriesWithDelay();
+        showEntriesWithDelay();
     }
 
     form.addEventListener('submit', async (e) => {
@@ -286,7 +286,7 @@
       }
 
       try {
-        await saveMemory(message, name);
+        await saveJournalEntry(message, name);
       } catch (error) {
         console.error("Submission error:", error);
         button.classList.remove('fade-out');
@@ -306,16 +306,11 @@
         }, 10);
       }, 300);
 
-      await loadMemories();
+      await loadJournal();
 
       setTimeout(() => {
-        showMemories(localMemories);
+        showJournal(journalEntries);
       }, 2000);
-    });
-
-    window.addEventListener('load', async () => {
-        await loadMemories();
-        showMemories(localMemories);
     });
   </script>
 </body>
