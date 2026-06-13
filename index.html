@@ -9,8 +9,12 @@
   <style>
     body {
       font-family: 'IBM Plex Mono', monospace;
-      background-color: #ffffff;
-      color: #000000;
+      background-color: #f1ece1;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.06'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at center, #f5f1e8 0%, #ece6d8 100%);
+      background-attachment: fixed;
+      color: #1a1a1a;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -44,9 +48,9 @@
       padding: 1rem;
       font-family: inherit;
       font-size: 1rem;
-      border: none;
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 4px;
-      background-color: #f9f9f9;
+      background-color: rgba(255, 253, 247, 0.7);
       resize: none;
     }
 
@@ -122,9 +126,87 @@
     #thanksMessage.visible {
       opacity: 1;
     }
+
+    /* --- Risograph / photocopied print look --- */
+    .intro p, #thanksMessage, .memory, button[type="submit"] {
+      filter: url(#riso);
+      text-shadow:
+        0.7px 0.6px 0 rgba(150, 40, 40, 0.16),
+        -0.6px -0.5px 0 rgba(40, 60, 140, 0.13);
+    }
+
+    /* Printed paper scraps */
+    .memory {
+      background-color: rgba(255, 253, 247, 0.6);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-radius: 2px;
+    }
+    .memory em {
+      color: #7a3a3a;
+    }
+
+    /* Hand-drawn ink underline under the intro */
+    .intro p {
+      display: inline-block;
+      position: relative;
+    }
+    .intro p::after {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: -0.7em;
+      height: 6px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='6'%3E%3Cpath d='M0 3 Q 10 0 20 3 T 40 3 T 60 3 T 80 3' fill='none' stroke='%23962828' stroke-width='1.4'/%3E%3C/svg%3E") repeat-x;
+      opacity: 0.5;
+    }
+
+    /* Corner stamp */
+    .stamp {
+      position: fixed;
+      bottom: 5vh;
+      right: 4vw;
+      transform: rotate(-11deg);
+      border: 2px solid rgba(150, 40, 40, 0.42);
+      color: rgba(150, 40, 40, 0.5);
+      padding: 0.35em 0.7em;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      line-height: 1.25;
+      border-radius: 3px;
+      pointer-events: none;
+      filter: url(#riso);
+      z-index: 5;
+    }
+
+    /* Faint ink smudge, top-left */
+    .smudge {
+      position: fixed;
+      top: 6vh;
+      left: 5vw;
+      width: 90px;
+      height: 90px;
+      background: radial-gradient(circle at 35% 35%, rgba(40,60,140,0.10), rgba(40,60,140,0) 70%);
+      transform: rotate(18deg);
+      pointer-events: none;
+      filter: url(#riso);
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Risograph displacement filter (roughens edges for a photocopied look) -->
+  <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+    <filter id="riso" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
+
+  <div class="smudge"></div>
+  <div class="stamp">creative<br>chaos<br>2026</div>
 
   <div class="intro">
     <p>Leave here an idea, a feeling,<br>a fragment of your process...</p>
@@ -148,27 +230,25 @@
     const thanksMessage = document.getElementById('thanksMessage');
     const intro = document.querySelector('.intro');
 
-    // Memories are stored locally in the browser (no backend required)
-    const STORAGE_KEY = "chaosJournalMemories";
+    // Shared backend: Google Apps Script writing to a Google Sheet
+    const appsScriptUrl = "https://script.google.com/macros/s/AKfycbxvpo3rIMEm1sgfdBXvwGV04qZtzJyGQRohsjRvrPZjgCCkOsv92K9WizDHoVLChnZaEg/exec";
     let localMemories = [];
 
-    function loadMemories() {
+    async function loadMemories() {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        localMemories = stored ? JSON.parse(stored) : [];
+        const response = await fetch(appsScriptUrl);
+        if (!response.ok) throw new Error('Network response was not ok');
+        localMemories = await response.json();
       } catch (error) {
         console.error("Error loading memories:", error);
         localMemories = [];
       }
     }
 
-    function saveMemory(message, name) {
-      localMemories.push({ message, name });
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(localMemories));
-      } catch (error) {
-        console.error("Error saving memory:", error);
-      }
+    async function saveMemory(message, name) {
+      const data = new URLSearchParams({ message, name });
+      const response = await fetch(appsScriptUrl, { method: "POST", body: data });
+      if (!response.ok) throw new Error('Network response was not ok');
     }
 
     function showMemories(memoriesToShow) {
@@ -188,6 +268,10 @@
           const el = document.createElement("div");
           el.className = "memory";
           el.innerHTML = `<regular>${item.message}</regular><br><em style="font-weight:100">-${item.name || "Anonymous"}</em>`;
+
+          // Slight random tilt so notes read like pinned printed scraps
+          const tilt = (Math.random() * 8) - 4;
+          el.style.transform = `rotate(${tilt}deg)`;
 
           let region, top = 0, left = 0;
           const margin = 5;
@@ -282,7 +366,14 @@
         return;
       }
 
-      saveMemory(message, name);
+      try {
+        await saveMemory(message, name);
+      } catch (error) {
+        console.error("Submission error:", error);
+        button.classList.remove('fade-out');
+        alert("Something went wrong. Please try again.");
+        return;
+      }
 
       form.classList.add('fade-out');
       intro.classList.add('fade-out');
@@ -296,13 +387,15 @@
         }, 10);
       }, 300);
 
+      await loadMemories();
+
       setTimeout(() => {
         showMemories(localMemories);
       }, 2000);
     });
 
-    window.addEventListener('load', () => {
-        loadMemories();
+    window.addEventListener('load', async () => {
+        await loadMemories();
         showMemories(localMemories);
     });
   </script>
