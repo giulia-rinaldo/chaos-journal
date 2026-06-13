@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chaos Journal</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background-color: #ffffff;
+      color: #000000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+      overflow-y: hidden;
+      overflow-x: hidden;
+    }
+
+    .intro {
+      font-size: 1.1rem;
+      font-weight:500;
+      margin-bottom: 4rem;
+      color: #000000;
+      transition: opacity 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 500px;
+      gap: 1rem;
+      transition: opacity 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    textarea, input[type="text"] {
+      padding: 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+      resize: none;
+    }
+
+    form textarea {
+      height: 9rem;
+    }
+
+    button {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: transparent;
+      color: #000000;
+      border: none;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: normal;
+      cursor: pointer;
+      transition: color 0.3s ease, transform 0.2s cubic-bezier(.4,0,.2,1), font-weight 0.2s;
+    }
+
+    button:hover {
+      color: #333;
+      font-weight: bold;
+    }
+
+    #memoriesContainer {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .memory {
+      position: absolute;
+      max-width: 250px;
+      font-size: 0.9rem;
+      color: #000000;
+      opacity: 0;
+      transition: opacity 2s ease;
+      padding: 0.5em 1em;
+      pointer-events: auto;
+    }
+
+    .visible {
+      opacity: 1 !important;
+    }
+
+    .fade-out {
+      opacity: 0 !important;
+      transition: opacity 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    ::selection {
+      background-color: black;
+      color: white;
+    }
+
+    #thanksMessage {
+      padding: 3rem;
+      display: none;
+      margin-bottom: 2rem;
+      color: #000000;
+      font-size: 1.1rem;
+      opacity: 0;
+      transition: opacity 0.8s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+      position: relative;
+      z-index: 20;
+    }
+
+    #thanksMessage.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="intro">
+    <p>Leave here an idea, a feeling,<br>a fragment of your process...</p>
+  </div>
+
+  <div id="thanksMessage">
+    Thanks for entrusting the creative chaos
+  </div>
+
+  <form id="memoryForm">
+    <textarea name="message" placeholder="Write your idea..." required></textarea>
+    <input type="text" name="name" placeholder="Your name or initials">
+    <button type="submit">Entrust the creative chaos</button>
+  </form>
+
+  <div id="memoriesContainer"></div>
+
+  <script>
+    const form = document.getElementById('memoryForm');
+    const memoriesContainer = document.getElementById('memoriesContainer');
+    const thanksMessage = document.getElementById('thanksMessage');
+    const intro = document.querySelector('.intro');
+
+    // Memories are stored locally in the browser (no backend required)
+    const STORAGE_KEY = "chaosJournalMemories";
+    let localMemories = [];
+
+    function loadMemories() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        localMemories = stored ? JSON.parse(stored) : [];
+      } catch (error) {
+        console.error("Error loading memories:", error);
+        localMemories = [];
+      }
+    }
+
+    function saveMemory(message, name) {
+      localMemories.push({ message, name });
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(localMemories));
+      } catch (error) {
+        console.error("Error saving memory:", error);
+      }
+    }
+
+    function showMemories(memoriesToShow) {
+        memoriesContainer.innerHTML = "";
+        memoriesContainer.style.display = "block";
+        const usedPositions = [];
+        const thanksRect = thanksMessage.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const thanksTop = (thanksRect.top / vh) * 100;
+        const thanksLeft = (thanksRect.left / vw) * 100;
+        const thanksBottom = (thanksRect.bottom / vh) * 100;
+        const thanksRight = (thanksRect.right / vw) * 100;
+
+        const memoryElements = [];
+        memoriesToShow.forEach((item) => {
+          const el = document.createElement("div");
+          el.className = "memory";
+          el.innerHTML = `<regular>${item.message}</regular><br><em style="font-weight:100">-${item.name || "Anonymous"}</em>`;
+
+          let region, top = 0, left = 0;
+          const margin = 5;
+          let tries = 0;
+          let overlap = false;
+
+          do {
+            const areas = ['top', 'bottom', 'left', 'right'];
+            region = areas[Math.floor(Math.random() * areas.length)];
+
+            if (region === 'top') {
+              top = Math.random() * (thanksTop - margin);
+              left = Math.random() * 90;
+            } else if (region === 'bottom') {
+              top = thanksBottom + Math.random() * (100 - thanksBottom - margin);
+              left = Math.random() * 90;
+            } else if (region === 'left') {
+              top = Math.random() * 90;
+              left = Math.random() * (thanksLeft - margin);
+            } else if (region === 'right') {
+              top = Math.random() * 90;
+              left = thanksRight + Math.random() * (100 - thanksRight - margin);
+            }
+
+            el.style.top = `${top}vh`;
+            el.style.left = `${left}vw`;
+            el.style.visibility = "hidden";
+            memoriesContainer.appendChild(el);
+            const rect = el.getBoundingClientRect();
+            memoriesContainer.removeChild(el);
+
+            overlap = false;
+            for (const pos of usedPositions) {
+              if (
+                rect.left < pos.right &&
+                rect.right > pos.left &&
+                rect.top < pos.bottom &&
+                rect.bottom > pos.top
+              ) {
+                overlap = true;
+                break;
+              }
+            }
+            tries++;
+          } while (overlap && tries < 40);
+
+          el.style.top = `${top}vh`;
+          el.style.left = `${left}vw`;
+          el.style.visibility = "visible";
+          memoryElements.push(el);
+
+          memoriesContainer.appendChild(el);
+          const finalRect = el.getBoundingClientRect();
+          usedPositions.push({
+            left: finalRect.left,
+            right: finalRect.right,
+            top: finalRect.top,
+            bottom: finalRect.bottom
+          });
+          memoriesContainer.removeChild(el);
+        });
+
+        function showMemoriesWithDelay(index = 0) {
+          if (index === 0) {
+            thanksMessage.classList.remove('visible');
+            setTimeout(() => {
+              thanksMessage.style.display = "none";
+            }, 800);
+          }
+          if (index >= memoryElements.length) return;
+          memoriesContainer.appendChild(memoryElements[index]);
+          setTimeout(() => {
+            memoryElements[index].classList.add("visible");
+            showMemoriesWithDelay(index + 1);
+          }, index === 0 ? 0 : 200);
+        }
+        showMemoriesWithDelay();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const button = form.querySelector('button[type="submit"]');
+      button.classList.add('fade-out');
+
+      const formData = new FormData(form);
+      const message = (formData.get("message") || "").toString().trim();
+      const name = (formData.get("name") || "").toString().trim();
+
+      if (!message) {
+        button.classList.remove('fade-out');
+        return;
+      }
+
+      saveMemory(message, name);
+
+      form.classList.add('fade-out');
+      intro.classList.add('fade-out');
+
+      setTimeout(() => {
+        form.style.display = "none";
+        intro.style.display = "none";
+        thanksMessage.style.display = "block";
+        setTimeout(() => {
+          thanksMessage.classList.add('visible');
+        }, 10);
+      }, 300);
+
+      setTimeout(() => {
+        showMemories(localMemories);
+      }, 2000);
+    });
+
+    window.addEventListener('load', () => {
+        loadMemories();
+        showMemories(localMemories);
+    });
+  </script>
+</body>
+</html>
