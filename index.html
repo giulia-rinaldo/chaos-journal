@@ -123,8 +123,9 @@
       opacity: 1;
     }
 
-    /* Photocopy / risograph effect on the text: grainy edges + ink misregistration */
-    .intro p, #thanksMessage, .journal-entry, button[type="submit"] {
+    /* Photocopy / risograph effect: grainy edges + grey ink misregistration */
+    .intro p, #thanksMessage, .journal-entry, button[type="submit"],
+    textarea, input[type="text"] {
       filter: url(#riso);
       text-shadow:
         0.6px 0.5px 0 rgba(90, 90, 90, 0.20),
