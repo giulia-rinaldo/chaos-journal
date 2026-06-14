@@ -123,13 +123,24 @@
       opacity: 1;
     }
 
-    /* Faint ink-on-paper effect on the text */
-    .intro p, #thanksMessage, .journal-entry {
-      text-shadow: 0.3px 0.3px 0.4px rgba(0, 0, 0, 0.08);
+    /* Photocopy / risograph effect on the text: grainy edges + ink misregistration */
+    .intro p, #thanksMessage, .journal-entry, button[type="submit"] {
+      filter: url(#riso);
+      text-shadow:
+        0.8px 0.6px 0 rgba(185, 30, 45, 0.28),
+        -0.7px -0.5px 0 rgba(30, 65, 165, 0.24);
     }
   </style>
 </head>
 <body>
+
+  <!-- Risograph displacement filter: roughens text edges for a photocopied look -->
+  <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+    <filter id="riso" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
 
   <div class="intro">
     <p>Leave here an idea, a feeling,<br>a fragment of your process...</p>
