@@ -123,14 +123,14 @@
       opacity: 1;
     }
 
-    /* Photocopy / risograph effect: grainy edges + grey ink misregistration */
+    /* Photocopy / risograph effect: grainy edges + grey ink misregistration
     .intro p, #thanksMessage, .journal-entry, button[type="submit"],
     textarea, input[type="text"] {
       filter: url(#riso);
       text-shadow:
         0.6px 0.5px 0 rgba(90, 90, 90, 0.20),
         -0.5px -0.4px 0 rgba(140, 140, 140, 0.16);
-    }
+    } */
   </style>
 </head>
 <body>
@@ -165,7 +165,7 @@
     const thanksMessage = document.getElementById('thanksMessage');
     const intro = document.querySelector('.intro');
 
-    // Shared backend: Google Apps Script writing to a Google Sheet
+    // Backend: Google Apps Script writing to a Google Sheet
     const appsScriptUrl = "https://script.google.com/macros/s/AKfycbxvpo3rIMEm1sgfdBXvwGV04qZtzJyGQRohsjRvrPZjgCCkOsv92K9WizDHoVLChnZaEg/exec";
     let journalEntries = [];
 
